@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiSUMi 鋁擠型簡易試算表</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 650px;
+            border-top: 6px solid #004098; /* Misumi Blue */
+        }
+        h2 {
+            text-align: center;
+            color: #004098;
+            margin-bottom: 10px;
+        }
+        .header-link {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .header-link a {
+            display: inline-block;
+            text-decoration: none;
+            color: #004098;
+            background-color: #fff;
+            border: 1px solid #004098;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .header-link a:hover {
+            background-color: #004098;
+            color: #ffcc00; /* Yellow text on hover */
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        select:focus, input:focus {
+            border-color: #004098;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 64, 152, 0.2);
+        }
+        .radio-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .radio-option {
+            flex: 1;
+            position: relative;
+        }
+        .radio-option input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+        .radio-option label {
+            display: block;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.2s;
+            margin-bottom: 0;
+        }
+        /* Selected Radio State: Blue Border, Yellowish Background */
+        .radio-option input:checked + label {
+            border-color: #004098;
+            background-color: #fffbe6; /* Light Yellow */
+            color: #004098;
+        }
+        
+        .info-display {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #eef6ff;
+            border-left: 4px solid #ffcc00; /* Yellow accent */
+            color: #004098;
+            font-size: 0.95rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        /* SVG Styles */
+        .diagram-container {
+            text-align: center;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+            background-color: #fafafa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        svg { width: 100%; max-width: 450px; height: 100%; }
+        .beam { stroke: #5d6d7e; stroke-width: 8; stroke-linecap: round; }
+        .support { fill: #bdc3c7; stroke: #7f8c8d; stroke-width: 2; }
+        .force-line { stroke: #e74c3c; stroke-width: 4; fill: none; }
+        .wall { fill: #34495e; }
+        .text-label { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #004098; /* Blue Button */
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { 
+            background-color: #003075; 
+            color: #ffcc00; 
+        }
+
+        .result-box {
+            margin-top: 25px;
+            background-color: #f4f9ff;
+            border: 2px solid #004098;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        .result-value {
+            font-size: 2.5rem;
+            color: #c0392b;
+            font-weight: 800;
+            margin: 15px 0;
+        }
+        .check-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+        .status-ok { background-color: #d4edda; color: #155724; }
+        .status-warning { background-color: #fff3cd; color: #856404; }
+        .status-danger { background-color: #f8d7da; color: #721c24; }
+
+        .formula-note {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 15px;
+            background: rgba(255,255,255,0.6);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .disclaimer {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #999;
+            font-style: italic;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>MiSUMi 鋁擠型簡易試算表</h2>
+    
+    <div class="header-link">
+        <a href="https://tw.misumi-ec.com/pdf/fa/2015/p2_539_545_547_549_551_781-794.pdf" target="_blank">
+            🔗 鋁擠型技術支援
+        </a>
+    </div>
+
+    <div class="section">
+        <label>1. 選擇支撐結構</label>
+        <div class="radio-group">
+            <div class="radio-option">
+                <input type="radio" name="mode" id="mode-simple" value="48" checked onchange="updateUI()">
+                <label for="mode-simple">雙邊支持</label>
+            </div>
+            <div class="radio-option">
+                <input type="radio" name="mode" id="mode-cantilever" value="3" onchange="updateUI()">
+                <label for="mode-cantilever">單邊固定</label>
+            </div>
+            <div class="radio-option">
+                <input type="radio" name="mode" id="mode-fixed" value="192" onchange="updateUI()">
+                <label for="mode-fixed">雙邊固定</label>
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <svg id="svg-simple" viewBox="0 0 300 120">
+                <line x1="30" y1="80" x2="270" y2="80" class="beam" />
+                <polygon points="30,85 20,105 40,105" class="support" />
+                <polygon points="270,85 260,105 280,105" class="support" />
+                <line x1="150" y1="55" x2="150" y2="78" class="force-line" /> 
+                <text x="160" y="60" fill="#e74c3c" class="text-label">W</text>
+            </svg>
+
+            <svg id="svg-cantilever" viewBox="0 0 300 120" class="hidden">
+                <rect x="10" y="30" width="20" height="90" class="wall"/>
+                <line x1="30" y1="80" x2="250" y2="80" class="beam" />
+                <line x1="250" y1="40" x2="250" y2="75" class="force-line" />
+                <text x="260" y="55" fill="#e74c3c" class="text-label">W</text>
+            </svg>
+
+            <svg id="svg-fixed" viewBox="0 0 300 120" class="hidden">
+                <rect x="10" y="30" width="20" height="90" class="wall"/>
+                <rect x="270" y="30" width="20" height="90" class="wall"/>
+                <line x1="30" y1="80" x2="270" y2="80" class="beam" />
+                <line x1="150" y1="40" x2="150" y2="75" class="force-line" />
+                <text x="160" y="55" fill="#e74c3c" class="text-label">W</text>
+            </svg>
+        </div>
+    </div>
+
+    <div class="section">
+        <label for="profile">2. 選擇 Misumi 鋁擠型規格</label>
+        <select id="profile" onchange="updateIValue()">
+            <option value="" disabled selected>-- 請選擇型號 (HFS/NFS) --</option>
+            
+            <optgroup label="5系列 (溝槽寬 6mm)">
+                <option value="0.74">2020 (20x20)</option>
+                <option value="5.13">2040 (直立)</option>
+                <option value="1.36">2040 (平放)</option>
+                <option value="8.89">4040 (40x40)</option>
+            </optgroup>
+
+            <optgroup label="6系列 (溝槽寬 8mm)">
+                <option value="2.83">3030 (30x30)</option>
+                <option value="20.56">3060 (直立)</option>
+                <option value="5.33">3060 (平放)</option>
+                <option value="41.4">6060 (60x60)</option>
+            </optgroup>
+
+            <optgroup label="8系列 (溝槽寬 10mm)">
+                <option value="10.4">4040 (40x40)</option>
+                <option value="71.9">4080 (直立)</option>
+                <option value="19.8">4080 (平放)</option>
+                <option value="129.1">8080 (80x80)</option>
+            </optgroup>
+
+            <option value="custom">自訂輸入 (其他 Misumi 規格)</option>
+        </select>
+
+        <div id="i-display-box" class="info-display">
+            斷面二次慣性矩 I = <strong><span id="current-i-val">0</span></strong> ×10⁴mm⁴
+        </div>
+        
+        <div id="manual-input-group" class="hidden" style="margin-top:10px;">
+            <label for="custom-i" style="font-size:0.9em;">輸入 I 值 (×10⁴mm⁴)</label>
+            <input type="number" id="custom-i" step="0.01" placeholder="查閱型錄數值" oninput="updateIValue()">
+        </div>
+    </div>
+
+    <div class="section">
+        <div style="display: flex; gap: 15px;">
+            <div style="flex:1;">
+                <label for="load-w">3. 荷重 W (kgf)</label>
+                <input type="number" id="load-w" placeholder="輸入荷重">
+            </div>
+            <div style="flex:1;">
+                <label for="length">4. 跨距 L (mm)</label>
+                <input type="number" id="length" placeholder="輸入長度">
+            </div>
+        </div>
+    </div>
+
+    <button onclick="calculateDeflection()">計算變形量 (δ)</button>
+
+    <div id="result" class="result-box">
+        <div>預估變形量 (δ)</div>
+        <div class="result-value"><span id="val-delta">0</span> mm</div>
+        
+        <div id="safety-status" class="check-status"></div>
+
+        <div class="formula-note">
+            <strong>計算公式：</strong> <span id="formula-display" style="font-family: 'Times New Roman', serif; font-style: italic;">δ = (W · L³) / (48 · E · I)</span><br>
+            <span style="font-size:0.85em;">(E = 7000 kg/mm², W:kgf, L:mm, I:mm⁴)</span>
+        </div>
+        
+        <div class="disclaimer">※計算結果僅供參考</div>
+    </div>
+</div>
+
+<script>
+    function updateUI() {
+        document.getElementById('svg-simple').classList.add('hidden');
+        document.getElementById('svg-cantilever').classList.add('hidden');
+        document.getElementById('svg-fixed').classList.add('hidden');
+        
+        const modes = document.getElementsByName('mode');
+        let selectedVal = '48';
+        for(let mode of modes){ if(mode.checked) selectedVal = mode.value; }
+
+        let formulaHtml = "";
+        if(selectedVal === '48') {
+            document.getElementById('svg-simple').classList.remove('hidden');
+            formulaHtml = "δ = (W · L³) / (48 · E · I)";
+        } else if (selectedVal === '3') {
+            document.getElementById('svg-cantilever').classList.remove('hidden');
+            formulaHtml = "δ = (W · L³) / (3 · E · I)";
+        } else if (selectedVal === '192') {
+            document.getElementById('svg-fixed').classList.remove('hidden');
+            formulaHtml = "δ = (W · L³) / (192 · E · I)";
+        }
+        document.getElementById('formula-display').innerHTML = formulaHtml;
+    }
+
+    function updateIValue() {
+        const select = document.getElementById('profile');
+        const displayBox = document.getElementById('i-display-box');
+        const displaySpan = document.getElementById('current-i-val');
+        const manualDiv = document.getElementById('manual-input-group');
+        const customInput = document.getElementById('custom-i');
+
+        let iValue = 0;
+        if(select.value === 'custom'){
+            manualDiv.classList.remove('hidden');
+            iValue = customInput.value ? customInput.value : 0;
+        } else {
+            manualDiv.classList.add('hidden');
+            iValue = select.value;
+        }
+
+        if (select.value) {
+            displayBox.style.display = 'block';
+            displaySpan.innerText = iValue;
+        } else {
+            displayBox.style.display = 'none';
+        }
+    }
+
+    function calculateDeflection() {
+        const modes = document.getElementsByName('mode');
+        let K = 48;
+        for(let mode of modes){ if(mode.checked) K = parseFloat(mode.value); }
+
+        const profile = document.getElementById('profile');
+        let I_val = 0;
+        if(profile.value === 'custom') {
+            I_val = parseFloat(document.getElementById('custom-i').value);
+        } else {
+            I_val = parseFloat(profile.value);
+        }
+        
+        if(!I_val || isNaN(I_val) || I_val <= 0) {
+            alert("請選擇規格或輸入 I 值");
+            return;
+        }
+        // 1 (x10^4 mm^4) = 10000 mm^4
+        // 例如 0.74 (x10^4 mm^4) = 7400 mm^4
+        const I_mm4 = I_val * 10000; 
+
+        const W_kgf = parseFloat(document.getElementById('load-w').value);
+        const L = parseFloat(document.getElementById('length').value);
+        const E = 7000; // kg/mm2
+
+        if(!W_kgf || W_kgf <= 0) { alert("請輸入荷重 W"); return; }
+        if(!L || L <= 0) { alert("請輸入長度 L"); return; }
+
+        // 計算
+        const delta = (W_kgf * Math.pow(L, 3)) / (K * E * I_mm4);
+        const resultElem = document.getElementById('val-delta');
+        const statusElem = document.getElementById('safety-status');
+        
+        resultElem.innerText = delta.toFixed(3);
+        
+        // 安全判定
+        const maxDeflection = L / 1000;
+        
+        if(delta <= maxDeflection) {
+            resultElem.style.color = "#27ae60"; // Green
+            statusElem.className = "check-status status-ok";
+            statusElem.innerHTML = `✅ 變形量在安全範圍內 (標準 < L/1000 = ${maxDeflection.toFixed(2)}mm)`;
+        } else {
+            resultElem.style.color = "#c0392b"; // Red
+            statusElem.className = "check-status status-danger";
+            statusElem.innerHTML = `⚠️ 變形量過大 (建議 < L/1000 = ${maxDeflection.toFixed(2)}mm)`;
+        }
+
+        document.getElementById('result').style.display = 'block';
+    }
+    
+    // Init
+    updateUI();
+</script>
+
+</body>
+</html>
